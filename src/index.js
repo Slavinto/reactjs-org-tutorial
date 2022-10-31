@@ -2,50 +2,41 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 
-class Square extends React.Component {
-  render() {
-    return (
-      <button
-        className="square"
-        onClick={() => {
-          this.props.onClick();
-        }}
-      >
-        {this.props.value}
-      </button>
-    );
-  }
-}
+// class Square extends React.Component {
+//   render() {
+//     return (
+//       <button
+//         className="square"
+//         onClick={() => {
+//           this.props.onClick();
+//         }}
+//       >
+//         {this.props.value}
+//       </button>
+//     );
+//   }
+// }
+const Square = ({ onClick, value }) => {
+  return (
+    <button className="square" onClick={() => onClick()}>
+      {value}
+    </button>
+  );
+};
 
 class Board extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      squares: Array(9).fill(null),
-    };
-  }
-
   renderSquare(i) {
     return (
       <Square
-        onClick={() => this.handleClick(i)}
-        value={this.state.squares.at(i)}
+        onClick={() => this.props.onClick(i)}
+        value={this.props.squares[i]}
       />
     );
   }
 
-  handleClick(i) {
-    const squares = this.state.squares.slice();
-    squares[i] = "X";
-    this.setState({ squares: squares });
-  }
-
   render() {
-    const status = "Next player: X";
-
     return (
       <div>
-        <div className="status">{status}</div>
         <div className="board-row">
           {this.renderSquare(0)}
           {this.renderSquare(1)}
@@ -67,15 +58,66 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      history: [
+        {
+          squares: Array(9).fill(null),
+        },
+      ],
+      xIsNext: true,
+    };
+  }
+
+  handleClick(i) {
+    const history = this.state.history;
+    const [current] = history.slice(-1);
+    // Slice is used to create a copy of squares array
+    const squares = current.squares.slice();
+    if (calculateWinner(squares) || squares[i]) return;
+    squares[i] = this.state.xIsNext ? "X" : "O";
+    this.setState({
+      history: history.concat([
+        {
+          squares: squares,
+        },
+      ]),
+      xIsNext: !this.state.xIsNext,
+    });
+  }
+
   render() {
+    const history = this.state.history;
+    // const current = this.history[history.length - 1];
+    const [current] = history.slice(-1);
+    console.log(current.squares);
+    const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ? `Go to move # ${move}` : `Go to game start`;
+      return (
+        <li>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      );
+    });
+
+    let status = winner
+      ? `Winner is: ${winner}`
+      : `Next player: ${this.state.xIsNext ? "X" : "O"}`;
+
     return (
       <div className="game">
         <div className="game-board">
-          <Board />
+          <Board
+            squares={current.squares}
+            onClick={(i) => this.handleClick(i)}
+          />
         </div>
         <div className="game-info">
-          <div>{/* status */}</div>
-          <ol>{/* TODO */}</ol>
+          <div>{status}</div>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
@@ -86,3 +128,30 @@ class Game extends React.Component {
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<Game />);
+
+const calculateWinner = (squares) => {
+  if (!squares) return;
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+
+  let winner = null;
+  // console.log(squares);
+  lines.some((line) => {
+    const lineOfSquares = Array.from(
+      line.reduce((acc, el) => acc + squares[el], "")
+    );
+
+    if (lineOfSquares.every((symbol) => symbol === "X")) winner = "X";
+    if (lineOfSquares.every((symbol) => symbol === "O")) winner = "O";
+  });
+
+  return winner;
+};
