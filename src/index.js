@@ -96,13 +96,16 @@ class Game extends React.Component {
     });
   }
 
-  jumpTo(move) {
+  jumpTo(move, event) {
+    console.log(event.target.innerHTML);
+    event.target.innerHTML = `<strong>${event.target.innerHTML}<strong>`;
     if (move === undefined) return;
     this.setState({
-      history: this.state.history.slice(0, this.state.stepNumber + 1),
+      history: this.state.history.slice(0, move + 1),
       stepNumber: move,
       xIsNext: this.state.stepNumber % 2 === 0,
     });
+    console.log("jumpTo setState...");
   }
 
   render() {
@@ -112,14 +115,16 @@ class Game extends React.Component {
     const moves = history.map((step, move) => {
       const [row, col] = step.moveCoords;
       const desc = move
-        ? `Go to move # ${move}(row${row}:col${col})`
+        ? `Go to move # ${move}(row:${row} col:${col})`
         : `Go to game start`;
       return (
         <li key={move}>
-          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+          <button onClick={(e) => this.jumpTo(move, e)}>{desc}</button>
         </li>
       );
     });
+
+    console.log(this.state);
 
     let status = winner
       ? `Winner is: ${winner}`
