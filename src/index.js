@@ -2,9 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 
-const Square = ({ onClick, value }) => {
+const Square = ({ onClick, value, id }) => {
   return (
-    <button className="square" onClick={() => onClick()}>
+    <button className="square" onClick={() => onClick()} key={id}>
       {value}
     </button>
   );
@@ -16,30 +16,30 @@ class Board extends React.Component {
       <Square
         onClick={() => this.props.onClick(i)}
         value={this.props.squares[i]}
+        id={i}
       />
     );
   }
 
+  renderBoardRow(rowNumber, boardWidth) {
+    const row = [];
+    for (
+      let square = rowNumber * boardWidth;
+      square < (rowNumber + 1) * boardWidth;
+      square++
+    ) {
+      row.push(this.renderSquare(square));
+    }
+    return <div className="board-row">{row}</div>;
+  }
+
   render() {
-    return (
-      <div>
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
-      </div>
-    );
+    const board = [];
+    const boardWidth = 3;
+    for (let row = 0; row < boardWidth; row++) {
+      board.push(this.renderBoardRow(row, boardWidth));
+    }
+    return <div>{board}</div>;
   }
 }
 
@@ -55,20 +55,19 @@ class Game extends React.Component {
       ],
       stepNumber: 0,
       xIsNext: true,
+      boardWidth: 3,
     };
   }
 
   handleClick(i) {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const [current] = history.slice(-1);
-    const boardSideLength = Math.sqrt(history[0].squares.length);
-
     let cnt = 0;
     let row, col;
 
-    for (let y = 1; y <= boardSideLength; y++) {
+    for (let y = 1; y <= this.state.boardWidth; y++) {
       // y -> row
-      for (let x = 1; x <= boardSideLength; x++) {
+      for (let x = 1; x <= this.state.boardWidth; x++) {
         // x -> col
         cnt++;
         if (i + 1 === cnt) {
@@ -78,7 +77,6 @@ class Game extends React.Component {
         }
       }
     }
-    // console.log(row + "|" + col);
 
     // Slice is used to create a copy of squares array
     const squares = current.squares.slice();
@@ -97,15 +95,20 @@ class Game extends React.Component {
   }
 
   jumpTo(move, event) {
-    console.log(event.target.innerHTML);
-    event.target.innerHTML = `<strong>${event.target.innerHTML}<strong>`;
-    if (move === undefined) return;
     this.setState({
       history: this.state.history.slice(0, move + 1),
       stepNumber: move,
       xIsNext: this.state.stepNumber % 2 === 0,
     });
-    console.log("jumpTo setState...");
+
+    const coordsEl = document.querySelectorAll(".bold-text-move");
+    coordsEl.forEach((el) => {
+      el.removeAttribute("style");
+      el.classList.remove("bold-text-move");
+    });
+
+    event.target.style.fontWeight = "bold";
+    event.target.classList.add("bold-text-move");
   }
 
   render() {
@@ -115,7 +118,7 @@ class Game extends React.Component {
     const moves = history.map((step, move) => {
       const [row, col] = step.moveCoords;
       const desc = move
-        ? `Go to move # ${move}(row:${row} col:${col})`
+        ? `Move ${move}(row:${row} col:${col})`
         : `Go to game start`;
       return (
         <li key={move}>
@@ -123,8 +126,6 @@ class Game extends React.Component {
         </li>
       );
     });
-
-    console.log(this.state);
 
     let status = winner
       ? `Winner is: ${winner}`
@@ -166,7 +167,6 @@ const calculateWinner = (squares) => {
   ];
 
   let winner = null;
-  // console.log(squares);
   lines.some((line) => {
     const lineOfSquares = Array.from(
       line.reduce((acc, el) => acc + squares[el], "")
