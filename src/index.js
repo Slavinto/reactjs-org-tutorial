@@ -10,6 +10,14 @@ const Square = ({ onClick, value, id }) => {
   );
 };
 
+const SortBtn = ({ onClick }) => {
+  return (
+    <button className="sort-btn" onClick={() => onClick()}>
+      Sort Moves
+    </button>
+  );
+};
+
 class Board extends React.Component {
   renderSquare(i) {
     return (
@@ -51,81 +59,149 @@ class Game extends React.Component {
         {
           squares: Array(9).fill(null),
           moveCoords: [],
+          moveNumber: 0,
         },
       ],
       stepNumber: 0,
       xIsNext: true,
       boardWidth: 3,
+      historyReversed: false,
     };
   }
 
-  handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const [current] = history.slice(-1);
+  initState() {
+    this.setState({
+      history: [
+        {
+          squares: Array(9).fill(null),
+          moveCoords: [],
+          moveNumber: 0,
+        },
+      ],
+      stepNumber: 0,
+      xIsNext: true,
+      boardWidth: 3,
+      historyReversed: false,
+    });
+  }
+
+  handleSort() {
+    this.setState({
+      historyReversed: !this.state.historyReversed,
+    });
+    // this.renderLi(this.state.history);
+  }
+
+  getMoveCoords(i) {
     let cnt = 0;
-    let row, col;
 
     for (let y = 1; y <= this.state.boardWidth; y++) {
       // y -> row
       for (let x = 1; x <= this.state.boardWidth; x++) {
         // x -> col
         cnt++;
-        if (i + 1 === cnt) {
-          row = y;
-          col = x;
-          break;
-        }
+        if (i + 1 === cnt) return [y, x];
       }
     }
+    return;
+  }
+
+  handleClick(i) {
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const [current] = history.slice(-1);
+    const [row, col] = this.getMoveCoords(i);
 
     // Slice is used to create a copy of squares array
     const squares = current.squares.slice();
     if (calculateWinner(squares) || squares[i]) return;
     squares[i] = this.state.xIsNext ? "X" : "O";
+
+    const historyUpd = history.concat([
+      {
+        squares: squares,
+        moveCoords: [row, col],
+        moveNumber: history.length,
+      },
+    ]);
+
+    // const newHistory = this.state.newHistory ? historyUpd.reverse() : null;
+
     this.setState({
-      history: history.concat([
-        {
-          squares: squares,
-          moveCoords: [row, col],
-        },
-      ]),
+      history: historyUpd,
       stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
+      historyReversed: this.state.historyReversed,
+      // newHistory: newHistory,
     });
   }
 
-  jumpTo(move, event) {
+  jumpTo(move) {
+    // console.log("move:" + move);
+
+    if (!move) return this.initState();
+
+    const history = this.state.history.slice(0, move + 1);
+
     this.setState({
-      history: this.state.history.slice(0, move + 1),
+      history: history,
+      // history: this.getCurHistory().slice(0, move + 1),
       stepNumber: move,
       xIsNext: this.state.stepNumber % 2 === 0,
+      historyReversed: this.state.historyReversed,
+      // newHistory: this.state.newHistory ? history.reverse() : null,
     });
 
-    const coordsEl = document.querySelectorAll(".bold-text-move");
-    coordsEl.forEach((el) => {
-      el.removeAttribute("style");
-      el.classList.remove("bold-text-move");
-    });
+    this.renderLi(history, move);
 
-    event.target.style.fontWeight = "bold";
-    event.target.classList.add("bold-text-move");
+    // const coordsEl = document.querySelectorAll(".bold-text-move");
+    // coordsEl.forEach((el) => {
+    //   el.removeAttribute("style");
+    //   el.classList.remove("bold-text-move");
+    // });
+
+    // event.target.style.fontWeight = "bold";
+    // event.target.classList.add("bold-text-move");
   }
 
-  render() {
-    const history = this.state.history;
-    const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
-    const moves = history.map((step, move) => {
-      const [row, col] = step.moveCoords;
-      const desc = move
-        ? `Move ${move}(row:${row} col:${col})`
-        : `Go to game start`;
+  renderLi(list, boldLi) {
+    let listNew = list.slice();
+    this.state.historyReversed
+      ? listNew.sort((a, b) => {
+          if (a.moveNumber > b.moveNumber) return -1;
+          if (a.moveNumber < b.moveNumber) return 1;
+          return 0;
+        })
+      : listNew.sort((a, b) => {
+          if (a.moveNumber > b.moveNumber) return 1;
+          if (a.moveNumber < b.moveNumber) return -1;
+          return 0;
+        });
+    console.log(listNew);
+    // console.log(this.state);
+    return listNew.map((li, liIdx) => {
+      const [row, col] = li.moveCoords;
+      const desc =
+        row || col
+          ? `Move ${li.moveNumber}(row:${row} col:${col})`
+          : `Go to game start`;
       return (
-        <li key={move}>
-          <button onClick={(e) => this.jumpTo(move, e)}>{desc}</button>
+        <li key={liIdx}>
+          <button onClick={(e) => this.jumpTo(li.moveNumber)}>{desc}</button>
         </li>
       );
     });
+  }
+
+  render() {
+    // this.syncHistory()
+    const history = this.state.history;
+    // console.log(history);
+    const moves = this.renderLi(history);
+    // console.log(this.state);
+    // ???
+    const current = this.state.history[this.state.stepNumber];
+    // console.log(this.state.stepNumber);
+    const winner = calculateWinner(current.squares);
 
     let status = winner
       ? `Winner is: ${winner}`
@@ -142,6 +218,7 @@ class Game extends React.Component {
         <div className="game-info">
           <div>{status}</div>
           <ol>{moves}</ol>
+          <SortBtn onClick={() => this.handleSort()} />
         </div>
       </div>
     );
