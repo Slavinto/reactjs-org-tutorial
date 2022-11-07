@@ -4,7 +4,7 @@ import "./index.css";
 
 const Square = ({ winnerSquare, onClick, value, id }) => {
   const borderStyle = winnerSquare
-    ? { border: "3px solid rgba(21, 158, 203, 0.4)", borderRadius: "10px" }
+    ? { border: "3px solid rgba(63, 188, 67, 0.2)", borderRadius: "7px" }
     : { border: "1px solid #999" };
   return (
     <button
@@ -44,7 +44,6 @@ class Board extends React.Component {
   }
 
   renderBoardRow(rowNumber, boardWidth) {
-    // console.log(calculateWinner)
     const row = [];
     for (
       let square = rowNumber * boardWidth;
@@ -59,7 +58,6 @@ class Board extends React.Component {
   render() {
     const board = [];
     const boardWidth = 3;
-    if (this.props.winner) console.log(this.props.winner);
     for (let row = 0; row < boardWidth; row++) {
       board.push(this.renderBoardRow(row, boardWidth));
     }
@@ -107,7 +105,6 @@ class Game extends React.Component {
     this.setState({
       historyReversed: !this.state.historyReversed,
     });
-    // this.renderLi(this.state.history);
   }
 
   getMoveCoords(i) {
@@ -142,42 +139,25 @@ class Game extends React.Component {
       },
     ]);
 
-    // const newHistory = this.state.newHistory ? historyUpd.reverse() : null;
-
     this.setState({
       history: historyUpd,
       stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
       historyReversed: this.state.historyReversed,
-      // newHistory: newHistory,
     });
   }
 
   jumpTo(move) {
-    // console.log("move:" + move);
-
     if (!move) return this.initState();
-
-    // const history = this.state.history.slice(0, move + 1);
 
     this.setState({
       stepNumber: move,
       xIsNext: this.state.stepNumber % 2 === 0,
       makeMoveBold: move,
       historyReversed: this.state.historyReversed,
-      // newHistory: this.state.newHistory ? history.reverse() : null,
     });
 
     this.renderLi(this.state.history);
-
-    // const coordsEl = document.querySelectorAll(".bold-text-move");
-    // coordsEl.forEach((el) => {
-    //   el.removeAttribute("style");
-    //   el.classList.remove("bold-text-move");
-    // });
-
-    // event.target.style.fontWeight = "bold";
-    // event.target.classList.add("bold-text-move");
   }
 
   renderLi(list) {
@@ -193,8 +173,7 @@ class Game extends React.Component {
           if (a.moveNumber < b.moveNumber) return -1;
           return 0;
         });
-    // console.log(listNew);
-    // console.log(this.state);
+
     return listNew.map((li, liIdx) => {
       const [row, col] = li.moveCoords;
       const desc =
@@ -220,20 +199,16 @@ class Game extends React.Component {
   }
 
   render() {
-    // this.syncHistory()
     const history = this.state.history;
-    // console.log(history);
     const moves = this.renderLi(history);
-    // console.log(this.state);
-    // ???
-    const current = this.state.history[this.state.stepNumber];
-    // console.log(this.state.stepNumber);
-
+    const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
     const winnerSquares = winner[1];
 
     let status = winner[0]
       ? `Winner is: ${winner[0]}`
+      : current.moveNumber === current.squares.length && !winner.length
+      ? `Draw!`
       : `Next player: ${this.state.xIsNext ? "X" : "O"}`;
 
     return (
@@ -274,21 +249,18 @@ const calculateWinner = (squares) => {
   ];
 
   let winner = [];
-  // winnerLine = null;
+
   lines.some((line) => {
     const lineOfSquares = Array.from(
       line.reduce((acc, el) => acc + squares[el], "")
     );
     if (lineOfSquares.every((symbol) => symbol === "X")) {
       winner = [..."X", line];
-      // winnerLine = line;
     }
     if (lineOfSquares.every((symbol) => symbol === "O")) {
       winner = [..."O", line];
-      // winnerLine = line;
     }
   });
-  // if (winner) highlightSquares(winSquares);
-  // if (winner) console.log(winner);
+
   return winner;
 };
