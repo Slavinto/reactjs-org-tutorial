@@ -66,6 +66,7 @@ class Game extends React.Component {
       xIsNext: true,
       boardWidth: 3,
       historyReversed: false,
+      makeMoveBold: null,
     };
   }
 
@@ -82,6 +83,7 @@ class Game extends React.Component {
       xIsNext: true,
       boardWidth: 3,
       historyReversed: false,
+      makeMoveBold: null,
     });
   }
 
@@ -140,18 +142,17 @@ class Game extends React.Component {
 
     if (!move) return this.initState();
 
-    const history = this.state.history.slice(0, move + 1);
+    // const history = this.state.history.slice(0, move + 1);
 
     this.setState({
-      history: history,
-      // history: this.getCurHistory().slice(0, move + 1),
       stepNumber: move,
       xIsNext: this.state.stepNumber % 2 === 0,
+      makeMoveBold: move,
       historyReversed: this.state.historyReversed,
       // newHistory: this.state.newHistory ? history.reverse() : null,
     });
 
-    this.renderLi(history, move);
+    this.renderLi(this.state.history);
 
     // const coordsEl = document.querySelectorAll(".bold-text-move");
     // coordsEl.forEach((el) => {
@@ -163,8 +164,8 @@ class Game extends React.Component {
     // event.target.classList.add("bold-text-move");
   }
 
-  renderLi(list, boldLi) {
-    let listNew = list.slice();
+  renderLi(list) {
+    const listNew = list.slice();
     this.state.historyReversed
       ? listNew.sort((a, b) => {
           if (a.moveNumber > b.moveNumber) return -1;
@@ -176,8 +177,8 @@ class Game extends React.Component {
           if (a.moveNumber < b.moveNumber) return -1;
           return 0;
         });
-    console.log(listNew);
-    // console.log(this.state);
+    // console.log(listNew);
+    console.log(this.state);
     return listNew.map((li, liIdx) => {
       const [row, col] = li.moveCoords;
       const desc =
@@ -186,7 +187,17 @@ class Game extends React.Component {
           : `Go to game start`;
       return (
         <li key={liIdx}>
-          <button onClick={(e) => this.jumpTo(li.moveNumber)}>{desc}</button>
+          <button onClick={(e) => this.jumpTo(li.moveNumber)}>
+            <span
+              style={
+                this.state.makeMoveBold === li.moveNumber
+                  ? { fontWeight: "bold" }
+                  : { fontWeight: "normal" }
+              }
+            >
+              {desc}
+            </span>
+          </button>
         </li>
       );
     });
