@@ -1,4 +1,5 @@
 import React from "react";
+import { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 
@@ -11,7 +12,7 @@ const Square = ({ winnerSquare, onClick, value, id }) => {
       style={borderStyle}
       className="square"
       onClick={() => onClick()}
-      key={id}
+      key={"square" + id}
     >
       {value}
     </button>
@@ -26,44 +27,43 @@ const SortBtn = ({ onClick }) => {
   );
 };
 
-class Board extends React.Component {
-  renderSquare(i) {
-    const winner = this.props.winner
-      ? this.props.winner.includes(i)
-      : false
-      ? true
-      : false;
+const Board = ({ squares, onClick, winner }) => {
+  const renderSquare = (i) => {
+    const winnerSq = !winner ? false : winner.includes(i) ? true : false;
     return (
       <Square
-        winnerSquare={winner}
-        onClick={() => this.props.onClick(i)}
-        value={this.props.squares[i]}
+        winnerSquare={winnerSq}
+        onClick={() => onClick(i)}
+        value={squares[i]}
         id={i}
       />
     );
-  }
+  };
 
-  renderBoardRow(rowNumber, boardWidth) {
+  const renderBoardRow = (rowNumber, boardWidth) => {
     const row = [];
     for (
       let square = rowNumber * boardWidth;
       square < (rowNumber + 1) * boardWidth;
       square++
     ) {
-      row.push(this.renderSquare(square));
+      row.push(renderSquare(square));
     }
-    return <div className="board-row">{row}</div>;
+    return (
+      <div key={"row" + rowNumber} className="board-row">
+        {row}
+      </div>
+    );
+  };
+
+  const board = [];
+  const boardWidth = 3;
+  for (let row = 0; row < boardWidth; row++) {
+    board.push(renderBoardRow(row, boardWidth));
   }
 
-  render() {
-    const board = [];
-    const boardWidth = 3;
-    for (let row = 0; row < boardWidth; row++) {
-      board.push(this.renderBoardRow(row, boardWidth));
-    }
-    return <div>{board}</div>;
-  }
-}
+  return <div>{board}</div>;
+};
 
 class Game extends React.Component {
   constructor(props) {
