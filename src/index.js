@@ -12,7 +12,7 @@ const Square = ({ winnerSquare, onClick, value, id }) => {
       style={borderStyle}
       className="square"
       onClick={() => onClick()}
-      key={"square" + id}
+      // key={"square-" + id}
     >
       {value}
     </button>
@@ -50,7 +50,7 @@ const Board = ({ squares, onClick, winner }) => {
       row.push(renderSquare(square));
     }
     return (
-      <div key={"row" + rowNumber} className="board-row">
+      <div key={"board-row-" + rowNumber} className="board-row">
         {row}
       </div>
     );
@@ -174,18 +174,18 @@ class Game extends React.Component {
           return 0;
         });
 
-    return listNew.map((li, liIdx) => {
-      const [row, col] = li.moveCoords;
+    return listNew.map(({ moveNumber, moveCoords }) => {
+      const [row, col] = moveCoords;
       const desc =
         row || col
-          ? `Move ${li.moveNumber}(row:${row} col:${col})`
+          ? `Move ${moveNumber}(row:${row} col:${col})`
           : `Go to game start`;
       return (
-        <li key={liIdx}>
-          <button onClick={(e) => this.jumpTo(li.moveNumber)}>
+        <li key={"move-list-" + moveNumber}>
+          <button onClick={() => this.jumpTo(moveNumber)}>
             <span
               style={
-                this.state.makeMoveBold === li.moveNumber
+                this.state.makeMoveBold === moveNumber
                   ? { fontWeight: "bold" }
                   : { fontWeight: "normal" }
               }
